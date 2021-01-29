@@ -1,6 +1,7 @@
 # ondes_framboise
 
 HISTORY
+
 The Ondes framboise is a digital emulator of one of the first electronic musical instruments, the Ondes Martenot. Invented by Maurice Martenot in 1928, the Ondes Martenot uses interference between radio frequency oscillators, one fixed and the other variable, to generate an audio signal.
 
 In its most mature form the Ondes Martenot has both a conventional small-keyed 6-octave keyboard - which can be moved side to side to generate vibrato - and also a ribbon - a ring attached to a wire which slides from side to side to create glissandi or portamento effects. The input method is selected by a switch.
@@ -15,6 +16,7 @@ Other features include a variable high-pass filter (Feutre) controlled by a foot
 
 
 THE ONDES FRAMBOISE
+
 The Ondes framboise is an attempt to create an affordable alternative to a genuine, extremely rare, Ondes Martenot or one of the almost as rare and very expensive alternatives. It uses digital sound synthesis by Pure Data (PD) running on a Raspberry Pi 3 to create all the waveforms from multiple wavetables driven by a single oscillator, and also attempts to emulate at least some of the character of the special diffuseurs entirely in software. A separate server process communicates with a custom hardware interface to read digital inputs from the keyboard and switches, an accelerometer physically attached to the keyboard for vibrato, and an 8-channel ADC which reads analogue input from the ribbon (using a 10-turn potentiometer) the Touche (using a pressure sensitive resistor), the level controls for the Octaviant, petit gambe and Souffle levels, the 'effects diffuseur' level and the Feutre and Expression pedals. PD and the server communicate with each other using OSC messages.
 
 In addition to these 'conventional' Ondes controls, some additional features have been added. The prototype is based on a 4-octave full-size key keyboard (like some of the currently available Ondes intruments, e.g. the Ondomo), so the octave shift buttons have been modified to allow ±2 octaves shift (latching). In practice the lowest and highest few notes are not really usable, but the useful range is >7 octaves. The ribbon is fitted with red/green LEDs to mark the position of the 'C' notes in red, with middle C in green to indicate the octave shift (if any) currently in force. The Touche button has an internal RGB LED to give visual feedback of the current volume level from off (silent) through red, yellow, green, cyan, blue, magenta to white (maximum volume) - particularly useful for claquement mode to give advance warning of the volume before a key is pressed. There is also a 2x16 LCD display with a rotary encoder for input allowing for a number of additional options:
