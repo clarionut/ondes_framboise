@@ -25,3 +25,5 @@ In addition to these 'conventional' Ondes controls, some additional features hav
   - the RPi can be rebooted, or shutdown cleanly before poweroff
 
 Ealy experiments with the Ondes frambois used a PiFi DAC+ 2-channel audio card, but the current version uses a MAYA44 USB+ 4-channel interface allowing each diffuseur to have its own output channel, via two class D stereo amplifiers. A demonstration of the Ondes playing Rachmaninov 'Vocalise' with accompaniment on a Casio Privia PX-350M (both recorded digitally) in available on YouTube (https://www.youtube.com/watch?v=8Qs7qE2W0aA)
+
+The 3D printed parts will be published on Thingiverse (https://www.thingiverse.com/thing:4742145).
