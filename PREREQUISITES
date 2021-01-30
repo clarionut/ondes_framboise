@@ -1,0 +1,26 @@
+CONFIGURATION IN /boot/config.txt
+Compile and install the spi0_cs2 dtoverlay using the instructions in spi0_cs2.dts
+Ensure that the following lines are present in /boot/config.txt:
+dtparam=spi=on
+dtoverlay=spi0_cs2
+dtoverlay=rotary-encoder,pin_a=5,pin_b=6,relative_axis=1
+dtoverlay=gpio-key,gpio=12,keycode=0x1d0,label="KEY_FN"
+
+
+C LIBRARIES FOR ondes_server.c
+liblo-dev (sudo apt-get install liblo-dev)
+libmcp23s17 (https://github.com/piface/libmcp23s17)
+liblcd1602  (https://github.com/bitbank2/LCD1602)
+
+
+PURE DATA
+The Ondes patch runs on vanilla Pure Data but requires some additional objects:
+cyclone  (sudo apt-get install pd-cyclone)
+freeverb (sudo apt-get install pd-freeverb)
+iemlib   (sudo apt-get install pd-iemlib)
+mrpeach  (sudo apt-get install pd-mrpeach pd-mrpeach-net)
+osc      (sudo apt-get install pd-osc)
+zexy     (sudo apt-get install pd-zexy)
+Plus some externals:
+byteToBits.pd (part of this project)
+resonators~   (download resonators~.zip from https://forum.pdpatchrepo.info/topic/9098/sinusoids-harmonics-resonators-and-enveloper-oscillator-banks-newest-version-uploaded-on-the-10-03-2015)
