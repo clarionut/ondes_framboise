@@ -507,12 +507,12 @@ int main(int argc, char *argv[]) {
       uint8_t changed = 0;
       for (uint8_t i = 0; i < 8; i++) {
 	/* set the 'i'th bit of Port A to 0 for the keyboard / switch
-	   scan (starting at the right-hand end) */
+	   scan (starting with the least-significant bit) */
 	mcp23s17_write_reg((uint8_t) ~mask, GPIOA, 0, mcp23s17_fd);
 	mask <<= 1;
 	keys[i] = (uint8_t) mcp23s17_read_reg(GPIOB, 0, mcp23s17_fd);
 	/* Invert so pressed keys are 1, others 0. Do it this way so
-	 * that we only have one bit to shift in the keymask (below) */
+	 * that we only have to shift one bit in the keymask (below) */
 	keys[i] = ~keys[i];
 	
 	if (keys[i] != prevKeys[i]) {
