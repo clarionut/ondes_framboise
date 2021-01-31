@@ -23,12 +23,12 @@ In addition to these 'conventional' Ondes controls, some additional features hav
   - the tuning can be adjusted in steps of 0.1Hz (currently only for the main oscillator; the Palme tuning needs to be adjusted in parallel)
   - the 'C' markers can be all on, only Middle C on, or all off
   - the Touche LED can be enabled or disabled
-  - recording mode allows live or MIDI performances can be recorded directly to a 4-channel WAV file on the RPi SD card
-  - a MIDI file on the RPi SD card can be played back and recorded if required
+  - recording mode allows live or MIDI performances to be recorded directly to a 4-channel WAV file on the RPi SD card
+  - a MIDI file on the RPi SD card can be played back and the audio recorded if required
   - the current tuning and LED configuration can be saved and will be loaded automatically at the next startup
   - the RPi OS can be updated without having to log in over WiFi
   - the RPi can be rebooted, or shutdown cleanly before poweroff
 
 Ealy experiments with the Ondes framboise used a PiFi DAC+ 2-channel audio card, but the current version uses a MAYA44 USB+ 4-channel interface, allowing each diffuseur to have its own output channel via two class D stereo amplifiers. A demonstration of the Ondes playing Rachmaninov 'Vocalise' with accompaniment on a Casio Privia PX-350M (both recorded digitally) is available on YouTube (https://www.youtube.com/watch?v=8Qs7qE2W0aA)
 
-The 3D printed parts are published on Thingiverse (https://www.thingiverse.com/thing:4742145).
+The 3D printed parts and construction information are published on Thingiverse (https://www.thingiverse.com/thing:4742145).
