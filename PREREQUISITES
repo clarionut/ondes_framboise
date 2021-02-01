@@ -9,8 +9,8 @@ dtoverlay=gpio-key,gpio=12,keycode=0x1d0,label="KEY_FN"
 
 C LIBRARIES FOR ondes_server.c
 liblo-dev (sudo apt-get install liblo-dev)
-libmcp23s17 (https://github.com/piface/libmcp23s17)
-liblcd1602  (https://github.com/bitbank2/LCD1602)
+libmcp23s17 (git clone https://github.com/piface/libmcp23s17.git)
+liblcd1602  (git clone https://github.com/bitbank2/LCD1602.git)
 
 
 PURE DATA
