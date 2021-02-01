@@ -1,26 +1,43 @@
+Assuming a new installation of Raspbian Buster Lite...
+
 CONFIGURATION IN /boot/config.txt
 Compile and install the spi0_cs2 dtoverlay using the instructions in spi0_cs2.dts
 Ensure that the following lines are present in /boot/config.txt:
 dtparam=spi=on
+dtparam=i2c_arm=on
 dtoverlay=spi0_cs2
 dtoverlay=rotary-encoder,pin_a=5,pin_b=6,relative_axis=1
 dtoverlay=gpio-key,gpio=12,keycode=0x1d0,label="KEY_FN"
 
 
 C LIBRARIES FOR ondes_server.c
-liblo-dev (sudo apt-get install liblo-dev)
-libmcp23s17 (git clone https://github.com/piface/libmcp23s17.git)
-liblcd1602  (git clone https://github.com/bitbank2/LCD1602.git)
+liblo-dev (sudo apt install liblo7 liblo-dev)
+libmcp23s17 (git clone https://github.com/piface/libmcp23s17.git, follow the instructions to build and install)
+liblcd1602  (git clone https://github.com/bitbank2/LCD1602.git, follow the instructions to build and install)
 
 
 PURE DATA
 The Ondes patch runs on vanilla Pure Data but requires some additional objects:
-cyclone  (sudo apt-get install pd-cyclone)
-freeverb (sudo apt-get install pd-freeverb)
-iemlib   (sudo apt-get install pd-iemlib)
-mrpeach  (sudo apt-get install pd-mrpeach pd-mrpeach-net)
-osc      (sudo apt-get install pd-osc)
-zexy     (sudo apt-get install pd-zexy)
+Pure Data itself (sudo apt install puredata)
+cyclone          (sudo apt install pd-cyclone)
+freeverb         (sudo apt install pd-freeverb)
+iemlib           (sudo apt install pd-iemlib)
+mrpeach          (sudo apt install pd-mrpeach pd-mrpeach-net)
+osc              (sudo apt install pd-osc)
+zexy             (sudo apt install pd-zexy)
 Plus some externals:
-byteToBits.pd (part of this project)
-resonators~   (download resonators~.zip from https://forum.pdpatchrepo.info/topic/9098/sinusoids-harmonics-resonators-and-enveloper-oscillator-banks-newest-version-uploaded-on-the-10-03-2015)
+byteToBits.pd (part of this project, place in /home/pi/Pd/externals/)
+resonators~   (download resonators~.zip from https://forum.pdpatchrepo.info/topic/9098/sinusoids-harmonics-resonators-and-enveloper-oscillator-banks-newest-version-uploaded-on-the-10-03-2015
+               unzip the download and move the resonators~/ folder into /home/pi/Pd/externals/)
+
+PURE DATA CONFIGURATION
+Add these entries to the Pure Data Path (via File | Preferences | Path... in the pd GUI):
+/home/pi/Pd/externals
+/home/pi/Pd/externals/Resonators~
+/usr/lib/pd/extra/osc
+/usr/lib/pd/extra/iemnet
+/usr/lib/pd/extra/cyclone
+/usr/lib/pd/extra/zexy
+
+Add this entry to the Pure Data Startup (via File | Preferences | Startup... in the pd GUI):
+/usr/lib/pd/extra/zexy
