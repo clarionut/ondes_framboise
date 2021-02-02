@@ -1,4 +1,4 @@
-Assuming a new, updated, installation of Raspbian Buster Lite...
+The following instructions assume a new, updated, installation of Raspbian Buster Lite
 
 SPI0 CONFIGURATION
 Compile and install spi0-3cs.dts - see the comments in the file for instructions
