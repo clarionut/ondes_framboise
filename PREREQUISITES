@@ -3,7 +3,7 @@ Assuming a new, updated, installation of Raspbian Buster Lite...
 SPI0 CONFIGURATION
 Compile and install spi0-3cs.dts - see the comments in the file for instructions
 After a restart (or issuing the command 'sudo dtoverlay spi0-3cs') there should three
-spidev0 entries in /dev/ - spidev0.0, spidev0.2 and spidev0.2
+spidev0 entries in /dev/ - spidev0.0, spidev0.1 and spidev0.2
 
 
 CONFIGURATION IN /boot/config.txt
@@ -62,9 +62,12 @@ Press F3 and ensure that all output channels are set to maximum volume
 Pess Esc to exit
 
 
-ONDES_SERVER INSTALLATION
+ONDES_SERVER AND PD PATCH INSTALLATION
+Create directories /home/pi/Ondes and /home/pi/Ondes/PD
 Place ondes_server.c in /home/pi/Ondes/ and compile:
   cc -o ~/Ondes/ondes_server ondes_server.c -llo -lm -lmcp23s17 -llcd1602 -I/usr/local/include
+
+Place Ondes.pd in /home/pi/Ondes/PD
 
 
 AUTOMATIC STARTUP
