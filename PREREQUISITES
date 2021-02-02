@@ -49,7 +49,7 @@ Add this entry to the Pure Data Startup (via File | Preferences | Startup... in 
 Change the Pure Data Audio Settings (Media | Audio Settings... in the pd GUI)
 Set Sample rate: 48000, Delay (msec): 25, Block size: 64.
 Output Devices - tick checkbox & select MAYA44 USB+ (hardware), Channels: 4
-(or e.g. PiFi DAC+ Channels: 2 for a 2-channel build - just select the relevant sound card)
+(alternatively e.g. PiFi DAC+ Channels: 2 for a 2-channel build - just select the relevant sound card)
 Save All Settings
 OK
 
