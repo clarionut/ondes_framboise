@@ -84,7 +84,7 @@
                now launches PD after liblo has been initialised, which appears
                to have fixed the problem.
 
- cc -o ~/bin/ondes_server ondes_server.c -llo -lm -lmcp23s17 -llcd1602 -I/usr/local/include
+ cc -o ~/Ondes/ondes_server ondes_server.c -llo -lm -lmcp23s17 -llcd1602 -I/usr/local/include
  
 */
 
