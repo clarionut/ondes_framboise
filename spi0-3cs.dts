@@ -1,0 +1,56 @@
+/dts-v1/;
+/plugin/;
+
+/*
+    Compile with command:
+      dtc -@ -I dts -O dtb -o spi0-3cs.dtbo spi0-3cs.dts
+    Then copy to /boot/overlays/
+      sudo cp spi0-3cs.dtbo /boot/overlays/
+
+    This overlay will automatically enable spi0, so any 'dtparam=spi=on' entry
+    in /boot/config.txt can be commented out. Instead add the line:
+      dtoverlay=spi0-3cs
+
+    See https://www.raspberrypi.org/forums/viewtopic.php?t=241191
+*/
+
+/ {
+	compatible = "brcm,bcm2835";
+
+	fragment@0 {
+		target = <&spi0_cs_pins>;
+		frag0: __overlay__ {
+			brcm,pins = <8 7 25>;
+		};
+	};
+
+	fragment@1 {
+		target = <&spi0>;
+		frag1: __overlay__ {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			cs-gpios = <&gpio 8 1>, <&gpio 7 1>, <&gpio 25 1>;
+			status = "okay";
+
+			spidev0_2: spidev@2 {
+				compatible = "spidev";
+				reg = <2>;	/* CE0 */
+				#address-cells = <1>;
+				#size-cells = <0>;
+				spi-max-frequency = <125000000>;
+			};
+		};
+	};
+
+	__overrides__ {
+		cs0_pin  = <&frag0>,"brcm,pins:0",
+			   <&frag1>,"cs-gpios:4";
+		cs1_pin  = <&frag0>,"brcm,pins:4",
+			   <&frag1>,"cs-gpios:16";
+		cs2_pin  = <&frag0>,"brcm,pins:8",
+			   <&frag1>,"cs-gpios:28";
+		cs2_spidev = <&spidev0_2>, "status";
+ 	};
+};
+
