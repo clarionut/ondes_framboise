@@ -32,7 +32,7 @@ zexy             (sudo apt install pd-zexy)
 Plus some externals:
 byteToBits.pd (part of this project, place in /home/pi/Pd/externals/ assuming a default PureData installation)
 resonators~   (download resonators~.zip from https://forum.pdpatchrepo.info/topic/9098/sinusoids-harmonics-resonators-and-enveloper-oscillator-banks-newest-version-uploaded-on-the-10-03-2015
-               unzip the download and move the resonators~/ folder into /home/pi/Pd/externals/)
+               unzip the download and move the resulting resonators~/ folder into /home/pi/Pd/externals/)
 
 
 PURE DATA CONFIGURATION
