@@ -22,7 +22,7 @@ liblcd1602  (git clone https://github.com/bitbank2/LCD1602.git, follow the instr
 
 PURE DATA INSTALLATION
 The Ondes patch runs on vanilla Pure Data but requires some additional objects:
-Pure Data itself (sudo apt install puredata) 
+Pure Data itself (sudo apt install puredata) - ensure the externals directory is set to /home/pi/Pd/externals during installation (should be the default)
 cyclone          (sudo apt install pd-cyclone)
 freeverb         (sudo apt install pd-freeverb)
 iemlib           (sudo apt install pd-iemlib)
@@ -38,7 +38,6 @@ resonators~   (download resonators~.zip from https://forum.pdpatchrepo.info/topi
 PURE DATA CONFIGURATION
 Add these entries to the Pure Data Path (via File | Preferences | Path... in the pd GUI):
 /home/pi/Pd/externals
-/home/pi/Pd/externals/Resonators~
 /usr/lib/pd/extra/osc
 /usr/lib/pd/extra/iemnet
 /usr/lib/pd/extra/cyclone
