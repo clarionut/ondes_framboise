@@ -1,24 +1,28 @@
-Assuming a new installation of Raspbian Buster Lite...
+Assuming a new, updated, installation of Raspbian Buster Lite...
+
+SPI0 CONFIGURATION
+Compile and install spi0-3cs.dts - see the comments in the file for instructions
+After a restart (or issuing the command 'sudo dtoverlay spi0-3cs') there should three
+spidev0 entries in /dev/ - spidev0.0, spidev0.2 and spidev0.2
+
 
 CONFIGURATION IN /boot/config.txt
-Compile and install the spi0_cs2 dtoverlay using the instructions in spi0_cs2.dts
 Ensure that the following lines are present in /boot/config.txt:
-dtparam=spi=on
 dtparam=i2c_arm=on
-dtoverlay=spi0_cs2
+dtoverlay=spi0-3cs
 dtoverlay=rotary-encoder,pin_a=5,pin_b=6,relative_axis=1
 dtoverlay=gpio-key,gpio=12,keycode=0x1d0,label="KEY_FN"
 
 
-C LIBRARIES FOR ondes_server.c
+C LIBRARIES REQUIRED FOR ondes_server.c
 liblo-dev (sudo apt install liblo7 liblo-dev)
 libmcp23s17 (git clone https://github.com/piface/libmcp23s17.git, follow the instructions to build and install)
 liblcd1602  (git clone https://github.com/bitbank2/LCD1602.git, follow the instructions to build and install)
 
 
-PURE DATA
+PURE DATA INSTALLATION
 The Ondes patch runs on vanilla Pure Data but requires some additional objects:
-Pure Data itself (sudo apt install puredata)
+Pure Data itself (sudo apt install puredata) 
 cyclone          (sudo apt install pd-cyclone)
 freeverb         (sudo apt install pd-freeverb)
 iemlib           (sudo apt install pd-iemlib)
@@ -26,9 +30,10 @@ mrpeach          (sudo apt install pd-mrpeach pd-mrpeach-net)
 osc              (sudo apt install pd-osc)
 zexy             (sudo apt install pd-zexy)
 Plus some externals:
-byteToBits.pd (part of this project, place in /home/pi/Pd/externals/)
+byteToBits.pd (part of this project, place in /home/pi/Pd/externals/ assuming a default PureData installation)
 resonators~   (download resonators~.zip from https://forum.pdpatchrepo.info/topic/9098/sinusoids-harmonics-resonators-and-enveloper-oscillator-banks-newest-version-uploaded-on-the-10-03-2015
                unzip the download and move the resonators~/ folder into /home/pi/Pd/externals/)
+
 
 PURE DATA CONFIGURATION
 Add these entries to the Pure Data Path (via File | Preferences | Path... in the pd GUI):
@@ -41,3 +46,28 @@ Add these entries to the Pure Data Path (via File | Preferences | Path... in the
 
 Add this entry to the Pure Data Startup (via File | Preferences | Startup... in the pd GUI):
 /usr/lib/pd/extra/zexy
+
+Change the Pure Data Audio Settings (Media | Audio Settings... in the pd GUI)
+Set Sample rate: 48000, Delay (msec): 25, Block size: 64.
+Output Devices - tick checkbox & select MAYA44 USB+ (hardware), Channels: 4
+(or e.g. PiFi DAC+ Channels: 2 for a 2-channel build - just select the relevant sound card)
+Save All Settings
+OK
+
+
+ALSA CONFIGURATION
+Launch alsamixer from the command line
+Press F6 and select your sound card from the list
+Press F3 and ensure that all output channels are set to maximum volume
+Pess Esc to exit
+
+
+ONDES_SERVER INSTALLATION
+Place ondes_server.c in /home/pi/Ondes/ and compile:
+  cc -o ~/Ondes/ondes_server ondes_server.c -llo -lm -lmcp23s17 -llcd1602 -I/usr/local/include
+
+
+AUTOMATIC STARTUP
+Add the line:
+su -c "sleep 2; /home/pi/Ondes/ondes_server > /dev/null 2>&1 &" pi
+to /etc/rc.local immediately above the final 'exit 0' line
