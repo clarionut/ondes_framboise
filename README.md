@@ -4,7 +4,7 @@ HISTORY
 
 The Ondes framboise is a digital emulator of one of the first electronic musical instruments, the Ondes Martenot. Invented by Maurice Martenot in 1928, the Ondes Martenot uses interference between radio frequency oscillators, one fixed and the other variable, to generate an audio signal.
 
-In its most mature form the Ondes Martenot has both a conventional small-keyed 6-octave keyboard which can be moved side to side to generate vibrato and also a ribbon - a ring attached to a wire which slides from side to side to create glissandi or portamento effects. The input method is selected by a switch.
+In its most mature form the Ondes Martenot has both a conventional small-keyed 6-octave keyboard which can be moved side to side to generate vibrato and also a ribbon - a ring attached to a thread which slides from side to side to create glissandi or portamento effects. The input method is selected by a switch.
 
 The volume is controlled by a 'Touche' (a large button which increases the volume the harder it is pressed) or alternatively by an expression foot pedal.
 
