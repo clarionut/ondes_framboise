@@ -29,6 +29,6 @@ In addition to these 'conventional' Ondes controls, some additional features hav
   - the RPi OS can be updated without having to log in over WiFi
   - the RPi can be rebooted, or shutdown cleanly before poweroff
 
-Ealy experiments with the Ondes framboise used a PiFi DAC+ 2-channel audio card, but the current version uses a MAYA44 USB+ 4-channel interface, allowing each diffuseur to have its own output channel via two class D stereo amplifiers. A demonstration of the Ondes playing Rachmaninov 'Vocalise' with accompaniment on a Casio Privia PX-350M (both recorded digitally) is available on YouTube (https://www.youtube.com/watch?v=8Qs7qE2W0aA)
+Early experiments with the Ondes framboise used a PiFi DAC+ 2-channel audio card, but the current version uses a MAYA44 USB+ 4-channel interface, allowing each diffuseur to have its own output channel via two class D stereo amplifiers. A recording of Rachmaninov's 'Vocalise' played on the Ondes framboise with accompaniment on a Casio Privia PX-350M (both recorded digitally) is available on YouTube (https://www.youtube.com/watch?v=8Qs7qE2W0aA). There is also a recording of the four 'Feuillets Inédits' by Olivier Messiaen (https://www.youtube.com/watch?v=9ope-bVgxdk&t=9s). Some sections of the Ondes part in the latter are beyond my limited capabilites and were recorded using the MIDI playback function.
 
 The 3D printed parts and construction information (still a work in progress) are published on Thingiverse (https://www.thingiverse.com/thing:4742145).
