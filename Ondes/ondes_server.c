@@ -269,8 +269,7 @@ int8_t gpioInitialise(void);
 
 /* other miscellaneous functions */
 void analogueReset(void);
-unsigned int myMillis(void);
-unsigned int myMicros(void);
+uint32_t myMicros(void);
 uint32_t myMillis(void);
 void delay(uint32_t);
 int spi_open(int);
@@ -1054,7 +1053,7 @@ uint32_t myMicros(void) {
 void delay(unsigned int millis) {
   // Wait for specified number of milliseconds 
   struct timespec sleep;
-  sleep.tv_sec - (time_t) (millis / 1000);
+  sleep.tv_sec = (time_t) (millis / 1000);
   sleep.tv_nsec = (uint64_t) (millis % 1000) * 1000000;
   nanosleep(&sleep, NULL);
 }
