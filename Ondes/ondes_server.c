@@ -20,7 +20,7 @@
        in total, so GPIO24 is used to select the final bank of switches
        (transposition) while scanning
 
-    adxl362 SPI accelerometer on non-standard SPI0.2 for vibrato control
+    adxl632 SPI accelerometer on non-standard SPI0.2 for vibrato control
        via IOCTL communication
        
     74hc595 shift registers (x2) to drive the red/green octave marker LEDs
@@ -274,7 +274,7 @@ uint32_t myMillis(void);
 void delay(uint32_t);
 int spi_open(int);
 int16_t read_mcp3008(uint8_t);
-int8_t adxl362(uint8_t, uint8_t, uint8_t);
+int8_t adxl632(uint8_t, uint8_t, uint8_t);
 void srPulse(int);
 void srSend(uint16_t);
 void setOctaveLEDs(void);
@@ -378,9 +378,9 @@ int main(int argc, char *argv[]) {
 
   /* The ADXL632 connection is on the non-standard SPI0.2 */
   adxl632_fd = spi_open(2);
-  adxl362(0x0A, 0x1F, 0x52); // ADXL362 soft reset
+  adxl632(0x0A, 0x1F, 0x52); // ADXL632 soft reset
   delay(1);
-  adxl362(0x0A, 0x2D, 0x02); // ADXL362 enable measurement
+  adxl632(0x0A, 0x2D, 0x02); // ADXL632 enable measurement
   
   /* Set up the OSC stuff with a new server on port 4001
    * and add methods to handle the messages from PD */
@@ -491,7 +491,7 @@ int main(int argc, char *argv[]) {
       }
 
       /* Read the accelerometer 8-bit X-axis for vibrato */
-      vib = adxl362(0x0B, 0x08, 0x00);
+      vib = adxl632(0x0B, 0x08, 0x00);
       lo_send(pd_lo, "/vib", "i", vib);
 
       analogueMillis += 5;
@@ -1116,7 +1116,7 @@ int16_t read_mcp3008(uint8_t channel) {
   return retval;
 }
 
-int8_t adxl362(uint8_t b0, uint8_t b1, uint8_t b2) {
+int8_t adxl632(uint8_t b0, uint8_t b1, uint8_t b2) {
   /* Communicate with the accelerometer */
   uint8_t buf[] = {b0, b1, b2};
   struct spi_ioc_transfer spi;
@@ -1133,7 +1133,7 @@ int8_t adxl362(uint8_t b0, uint8_t b1, uint8_t b2) {
     fprintf(stderr, "ADXL632: There was an error during the SPI transaction.\n");
   }
 
-  //fprintf(stderr, "ADXL362 Device ID: %02X %02X %02X\n", buf[0], buf[1], buf[2]);
+  //fprintf(stderr, "ADXL632 Device ID: %02X %02X %02X\n", buf[0], buf[1], buf[2]);
 
   return (int8_t) buf[2];
 }
