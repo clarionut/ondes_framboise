@@ -571,7 +571,7 @@ int main(int argc, char *argv[]) {
 	  /* Octave up pressed */
 	  if (!octUpPressed) {
 	    /* It wasn't pressed last pass, so update and send the octave */
-	    if (octaveShift < 24) octaveShift += 12;
+	    if (octaveShift < 12) octaveShift += 12;
 	    octUpPressed = 1;
 	    lo_send(pd_lo, "/oct", "i", octaveShift);
 	    if (debug) fprintf(stderr, "Octave shift up %d\n", octaveShift);
