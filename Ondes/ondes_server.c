@@ -20,7 +20,7 @@
        in total, so GPIO24 is used to select the final bank of switches
        (transposition) while scanning
 
-    adxl632 SPI accelerometer on non-standard SPI0.2 for vibrato control
+    adxl362 SPI accelerometer on non-standard SPI0.2 for vibrato control
        via IOCTL communication
        
     74hc595 shift registers (x2) to drive the red/green octave marker LEDs
@@ -83,6 +83,8 @@
                the colour information to ondes_server via liblo). This program
                now launches PD after liblo has been initialised, which appears
                to have fixed the problem.
+    21 02 21 - tweaked the order of startup events so LEDs and LCD are
+               synchronised better
 
  cc -o ~/Ondes/ondes_server ondes_server.c -llo -lm -lmcp23s17 -llcd1602 -I/usr/local/include
  
@@ -274,7 +276,7 @@ uint32_t myMillis(void);
 void delay(uint32_t);
 int spi_open(int);
 int16_t read_mcp3008(uint8_t);
-int8_t adxl632(uint8_t, uint8_t, uint8_t);
+int8_t adxl362(uint8_t, uint8_t, uint8_t);
 void srPulse(int);
 void srSend(uint16_t);
 void setOctaveLEDs(void);
@@ -345,6 +347,26 @@ int main(int argc, char *argv[]) {
     if (0 == strcasecmp(argv[i], "-debug")) debug = 1;
   }
 
+  /* Set up the OSC stuff with a new server on port 4001
+   * and add methods to handle the messages from PD */
+  lo_server_thread st = lo_server_thread_new("4001", liblo_error);
+  lo_address pd_addr  = lo_address_new(NULL, "4000");
+
+  /* Method to match any path and args */
+  lo_server_thread_add_method(st, NULL, NULL, generic_handler, NULL);
+
+  /* add method that will match the path /refresh with no args */
+  lo_server_thread_add_method(st, "/refresh", NULL, refresh_handler, NULL);
+
+  /* Method for path /led with one int arg */
+  lo_server_thread_add_method(st, "/led", "i", led_handler, NULL);
+
+  lo_server_thread_start(st);
+
+  /* Create an address for communication with PD's OSC server */
+  pd_lo = lo_address_new(NULL, "4000");
+
+  /* Set up the hardware interfaces */
   /* The MCP3008 connection is on SPI0.0 */
   mcp3008_fd = spi_open(0);
   
@@ -374,34 +396,14 @@ int main(int argc, char *argv[]) {
   gpioWrite(SER, 0);
   gpioWrite(RCLK, 0);
   gpioWrite(SRCLK, 0);
-  srSend(oct_led);
+  srSend(0x0000); // all LEDs off
 
   /* The ADXL632 connection is on the non-standard SPI0.2 */
   adxl632_fd = spi_open(2);
-  adxl632(0x0A, 0x1F, 0x52); // ADXL632 soft reset
+  adxl362(0x0A, 0x1F, 0x52); // ADXL362 soft reset
   delay(1);
-  adxl632(0x0A, 0x2D, 0x02); // ADXL632 enable measurement
+  adxl362(0x0A, 0x2D, 0x02); // ADXL362 enable measurement
   
-  /* Set up the OSC stuff with a new server on port 4001
-   * and add methods to handle the messages from PD */
-  lo_server_thread st = lo_server_thread_new("4001", liblo_error);
-  lo_address pd_addr  = lo_address_new(NULL, "4000");
-
-  /* Method to match any path and args */
-  lo_server_thread_add_method(st, NULL, NULL, generic_handler, NULL);
-
-  /* add method that will match the path /refresh with no args */
-  lo_server_thread_add_method(st, "/refresh", NULL, refresh_handler, NULL);
-
-  /* Method for path /led with one int arg */
-  lo_server_thread_add_method(st, "/led", "i", led_handler, NULL);
-
-  lo_server_thread_start(st);
-
-  /* Create an address for communication with PD's OSC server */
-  pd_lo = lo_address_new(NULL, "4000");
-
-  sleep(3);
   /* Start the PD process */
   system("pd -nogui /home/pi/Ondes/PD/Ondes.pd &");
 
@@ -444,6 +446,9 @@ int main(int argc, char *argv[]) {
   lcd1602WriteString(lcdText);
   maxMenu = sizeof(menuText) / 17;
  
+  /* Turn on the LEDs if needed */
+  srSend(oct_led);
+
   analogueReset();
   analogueMillis = myMillis();
   keyboardMillis = analogueMillis;
@@ -491,7 +496,7 @@ int main(int argc, char *argv[]) {
       }
 
       /* Read the accelerometer 8-bit X-axis for vibrato */
-      vib = adxl632(0x0B, 0x08, 0x00);
+      vib = adxl362(0x0B, 0x08, 0x00);
       lo_send(pd_lo, "/vib", "i", vib);
 
       analogueMillis += 5;
@@ -506,12 +511,12 @@ int main(int argc, char *argv[]) {
       uint8_t changed = 0;
       for (uint8_t i = 0; i < 8; i++) {
 	/* set the 'i'th bit of Port A to 0 for the keyboard / switch
-	   scan (starting with the least-significant bit) */
+	   scan (starting at the right-hand end) */
 	mcp23s17_write_reg((uint8_t) ~mask, GPIOA, 0, mcp23s17_fd);
 	mask <<= 1;
 	keys[i] = (uint8_t) mcp23s17_read_reg(GPIOB, 0, mcp23s17_fd);
 	/* Invert so pressed keys are 1, others 0. Do it this way so
-	 * that we only have to shift one bit in the keymask (below) */
+	 * that we only have one bit to shift in the keymask (below) */
 	keys[i] = ~keys[i];
 	
 	if (keys[i] != prevKeys[i]) {
@@ -1053,7 +1058,7 @@ uint32_t myMicros(void) {
 void delay(unsigned int millis) {
   // Wait for specified number of milliseconds 
   struct timespec sleep;
-  sleep.tv_sec = (time_t) (millis / 1000);
+  sleep.tv_sec - (time_t) (millis / 1000);
   sleep.tv_nsec = (uint64_t) (millis % 1000) * 1000000;
   nanosleep(&sleep, NULL);
 }
@@ -1116,7 +1121,7 @@ int16_t read_mcp3008(uint8_t channel) {
   return retval;
 }
 
-int8_t adxl632(uint8_t b0, uint8_t b1, uint8_t b2) {
+int8_t adxl362(uint8_t b0, uint8_t b1, uint8_t b2) {
   /* Communicate with the accelerometer */
   uint8_t buf[] = {b0, b1, b2};
   struct spi_ioc_transfer spi;
@@ -1133,7 +1138,7 @@ int8_t adxl632(uint8_t b0, uint8_t b1, uint8_t b2) {
     fprintf(stderr, "ADXL632: There was an error during the SPI transaction.\n");
   }
 
-  //fprintf(stderr, "ADXL632 Device ID: %02X %02X %02X\n", buf[0], buf[1], buf[2]);
+  //fprintf(stderr, "ADXL362 Device ID: %02X %02X %02X\n", buf[0], buf[1], buf[2]);
 
   return (int8_t) buf[2];
 }
