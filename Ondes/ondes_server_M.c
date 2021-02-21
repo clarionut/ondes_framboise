@@ -15,9 +15,8 @@
        via IOCTL communication on SPI0.0
 
     mcp23s08 SPI port expander on SPI0.1 to scan the switches (including
-       the vibrato switch on the keyboard) via IOCTL communication.
-       GPIOs 19, 20 and 24 (for compatibility with the first prototype)
-       are used to select the banks of switches while scanning
+       the vibrato switch on the keyboard) via IOCTL communication
+       GPIOs 19, 20 and 21 are used to scan the banks of switches
 
     adxl362 SPI accelerometer on non-standard SPI0.2 for vibrato control
        via IOCTL communication, using GPIO25 as CE2
