@@ -31,8 +31,9 @@ In addition to these 'conventional' Ondes controls, some additional features hav
 
 Early experiments with the Ondes framboise used a PiFi DAC+ 2-channel audio card, but the current version uses a MAYA44 USB+ 4-channel interface, allowing each diffuseur to have its own output channel via two class D stereo amplifiers. A recording of Rachmaninov's 'Vocalise' played on the Ondes framboise with accompaniment on a Casio Privia PX-350M (both recorded digitally) is available on YouTube (https://www.youtube.com/watch?v=8Qs7qE2W0aA). There is also a recording of the four 'Feuillets Inédits' by Olivier Messiaen (https://www.youtube.com/watch?v=9ope-bVgxdk&t=9s). Some sections of the Ondes part in the latter are beyond my limited capabilites and were recorded using the MIDI playback function.
 
-The 3D printed parts and construction information (still a work in progress) are published on Thingiverse (https://www.thingiverse.com/thing:4742145).
+The 3D printed parts and construction information (now essentially complete) are published on Thingiverse (https://www.thingiverse.com/thing:4742145).
 
 LATEST UPDATES:
 16-02-2021 - ondes_server_M.c code written to work with a USB keyboard instead of the switch-matrix keyboard of the original. MIDI input is handled in the server code so the Pure Data patch is unchanged. Works with a Korg microKey2-61 and an AKAI LPK25.
 14-02-2021 - updated the construction notes document on Thingiverse (see https://www.thingiverse.com/thing:4742145/files). Now includes a corrected layout for the interface board with (I think) all features working correctly - SN74HC595 shift register LED drivers, MCP3008 ADC, MCP23S08 port expander and ADXL632 accelerometer.
+21-02-2021 - the new interface board and modified server code (ondes_server_M) has been tested in the Ondes with a Korg microKEY2-61 as the keyboard input and everything works as expected. I have yet to make the linear rail mountings for the Korg keyboard but this should be trivial for anyone capable of building an Ondes themselves.
