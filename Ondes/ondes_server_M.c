@@ -9,19 +9,18 @@
     (previously was PiFi DAC+ 2-channel audio interface
        The PiFi card conflicts with the Raspberry Pi SPI1 interface
        so all three SPI devices must be placed on SPI0. This requires
-       a custom device tree overlay to create an SPI0.2 port
-       using GPIO25 as CE2)
+       a custom device tree overlay to create an SPI0.2 port)
     
     mcp3008 SPI ADC to read ribbon, touche and control pots and pedals
        via IOCTL communication on SPI0.0
 
     mcp23s08 SPI port expander on SPI0.1 to scan the switches (including
-       vibrato switch outside the tiroir) vio IOCTL communication.
-       GPIOs 19, 20 and 21 are used to select the banks of switches
-       while scanning
+       the vibrato switch on the keyboard) via IOCTL communication.
+       GPIOs 19, 20 and 24 (for compatibility with the first prototype)
+       are used to select the banks of switches while scanning
 
     adxl362 SPI accelerometer on non-standard SPI0.2 for vibrato control
-       via IOCTL communication
+       via IOCTL communication, using GPIO25 as CE2
        
     74hc595 shift registers (x2) to drive the red/green octave marker LEDs
        and the RGB LED in the Touche button. The octave markers are
@@ -38,6 +37,12 @@
     MIDI keyboard scanned by this program. It's easier to keep track of
        multiple key-presses here rather than in PD, and we can keep the
        existing LIBLO messaging so the PD patch is unchanged
+
+    Optional USB memory stick mounted on /usbdrive with subdirectories
+       WAV and MIDI. These can be symbolically linked to /home/pi/Ondes/WAV
+       and /home/pi/Ondes/MIDI to allow data files to be transferred easily.
+       Without a USB stick use real directories instead of symbolic links and
+       transfer data to and from the remote computer by scp.
 
 
   Modified:
@@ -171,7 +176,7 @@ uint16_t recMask  = 0x0000;
 uint8_t shiftreg_count = 0;
 
 int16_t analogueVal[7];
-uint8_t prevSws[9] = {0};
+uint8_t prevSws[3] = {0};
 int     lastKey     = 60;
 float   tuning      = 440.0;
 int     vib;
@@ -305,6 +310,7 @@ char    menuText[][17] = {"Tuning  A ",
 			  "Octave LED ",
 			  "Record  ",
 			  "Play MIDI No    ",
+			  "Eject USB  No   ",
 			  "Save config  No ",
 			  "Update OS  No   ",
 			  "Shutdown  No    "};
@@ -319,6 +325,7 @@ uint8_t saveConfig   = 0;
 uint8_t recording    = 0;
 uint8_t doRecord     = 0;
 uint8_t doUpdateOS   = 0;
+uint8_t ejectUSB     = 0;
 
 /* Declarations for MIDI playback */
 uint8_t playMidi     = 0;
@@ -341,6 +348,26 @@ int main(int argc, char *argv[]) {
     if (0 == strcasecmp(argv[i], "-debug")) debug = 1;
   }
 
+  /* Set up the OSC stuff with a new server on port 4001
+   * and add methods to handle the messages from PD */
+  lo_server_thread st = lo_server_thread_new("4001", liblo_error);
+  lo_address pd_addr  = lo_address_new(NULL, "4000");
+
+  /* Method to match any path and args */
+  lo_server_thread_add_method(st, NULL, NULL, generic_handler, NULL);
+
+  /* add method that will match the path /refresh with no args */
+  lo_server_thread_add_method(st, "/refresh", NULL, refresh_handler, NULL);
+
+  /* Method for path /led with one int arg */
+  lo_server_thread_add_method(st, "/led", "i", led_handler, NULL);
+
+  lo_server_thread_start(st);
+
+  /* Create an address for communication with PD's OSC server */
+  pd_lo = lo_address_new(NULL, "4000");
+
+  /* Set up the hardware interfaces */
   /* The MCP3008 connection is on SPI0.0 */
   mcp3008_fd = spi_open(0);
   
@@ -366,7 +393,7 @@ int main(int argc, char *argv[]) {
   gpioWrite(RCLK, 0);
   gpioSetMode(SRCLK, PI_OUTPUT);
   gpioWrite(SRCLK, 0);
-  srSend(oct_led);
+  srSend(0x0000); // all LEDs off
 
   /* The ADXL632 connection is on the non-standard SPI0.2 */
   adxl632_fd = spi_open(2);
@@ -380,29 +407,8 @@ int main(int argc, char *argv[]) {
     fprintf(stderr, "Error: cannot open /dev/snd/midiC1D0\n");
   }
   
-  /* Set up the OSC stuff with a new server on port 4001
-   * and add methods to handle the messages from PD */
-  lo_server_thread st = lo_server_thread_new("4001", liblo_error);
-  lo_address pd_addr  = lo_address_new(NULL, "4000");
-
-  /* Method to match any path and args */
-  lo_server_thread_add_method(st, NULL, NULL, generic_handler, NULL);
-
-  /* add method that will match the path /refresh with no args */
-  lo_server_thread_add_method(st, "/refresh", NULL, refresh_handler, NULL);
-
-  /* Method for path /led with one int arg */
-  lo_server_thread_add_method(st, "/led", "i", led_handler, NULL);
-
-  lo_server_thread_start(st);
-
-  /* Create an address for communication with PD's OSC server */
-  pd_lo = lo_address_new(NULL, "4000");
-
-  sleep(1);
   /* Start the PD process */
-  //system("pd -nogui /home/pi/Ondes/PD/Ondes.pd &");
-  system("pd /home/pi/Ondes/PD/Ondes.pd &");
+  system("pd -nogui /home/pi/Ondes/PD/Ondes.pd &");
 
   /* Set up the rotary encoder */
   getEncoderDescriptors();
@@ -442,7 +448,10 @@ int main(int argc, char *argv[]) {
   sprintf(lcdText, "%s%5.1f ", menuText[0], tuning);
   lcd1602WriteString(lcdText);
   maxMenu = sizeof(menuText) / 17;
- 
+
+  /* Turn on the LEDs if needed */
+  srSend(oct_led);
+  
   analogueReset();
   analogueMillis = myMillis();
   switchMillis   = analogueMillis;
@@ -496,26 +505,26 @@ int main(int argc, char *argv[]) {
       analogueMillis += 5;
     }
 
-    /* Scan the switch array into the switches[] array:
+    /* Scan the physical switches into the switches[] array:
        01 - 07 addressed by GPIO19 (there is no switch in the first position)
        08 - 15 addressed by GPIO20
        16 - 23 addressed by GPIO21  */
     if ((myMillis() - switchMillis) >= 15) { // was 10
       uint8_t switches[3] = {0};
       uint8_t changed = 0;
+      uint8_t gpio[] = {SW_1, SW_2, SW_3};
       for (uint8_t i = 0; i <= 2; i++) {
 	/* pull the rows of the switch matrix low in turn */
-	gpioWrite(SW_1 + i, 0);
+	gpioWrite(gpio[i], 0);
 	switches[i] = mcp23s08_read_reg(GPIO, 0, mcp23s08_fd);
-	/* Invert so pressed switches are 1, others 0. Do it this way so
-	 * we only have to shift one bit in the keymask (below) */
+	/* Invert here so ON switches = 1, OFF = 0 before sending to PD */
 	switches[i] = ~switches[i];
 	
 	if (switches[i] != prevSws[i]) {
 	  changed = 1;
 	  prevSws[i] = switches[i];
 	}
-	gpioWrite(SW_1 + i, 1);
+	gpioWrite(gpio[i], 1);
       }
 
       if (changed) {
@@ -526,19 +535,22 @@ int main(int argc, char *argv[]) {
 	changed = 0;
 
 	/* Send the switches.
-	   Bit 1 of switches[0] is the keyboard mounted vibrato switch.
-           Bit 2 is the 'T' switch - turn on all voices except Souffle
-	   (switches[1] bit 1) if this is set.
-	   Bits 3 - 7 are Ondes, Creux, Gambe, Nasillard & Octaviant
+	   switches[0] bits:
+	   0   - N/C
+	   1   - keyboard mounted vibrato switch.
+           2   - 'T' switch - turn on all voices except Souffle
+	                      (switches[1] bit 1) if this is set
+	   3-7 - Ondes, Creux, Gambe, Nasillard & Octaviant
 
 	   switches[1] bits:
-	   Bits 0 - 1 are petit Gambe & Souffle
-	   Bit 2 is Clavier / Ruban selection
-	   Bit 3 is legato / claquement keyboard mode
-	   Bits 4 - 7 are the D1 - D4 selectors
+	   0-1 - petit Gambe & Souffle
+	   2   - Clavier / Ruban selection
+	   3   - legato / claquement keyboard mode
+	   4-7 - D1 - D4 selectors
 
-	   switches[2] bits 0 - 5 are the transposition buttons
-	   Bits 6 & 7 are the octave shifters */
+	   switches[2] bits:
+	   0-5 - transposition buttons
+	   6-7 - octave shifters */
 	if (switches[0] & 4) {
 	  /* turn on voices if 'T' is on */
 	  switches[0] |= 248; // Ondes, Creux, Gambe, Nasillard, Octaviant
@@ -618,8 +630,8 @@ int main(int argc, char *argv[]) {
 	if ((255 == lowest) && (switches[1] & 8)) {
 	  /* All keys released - send play=0 if claquement mode */
 	  lo_send(pd_lo, "/key", "ii", lastKey - 36, 0);
-	} else {
-	  /* Send the lowest note to PD */
+	} else if (255 != lowest) {
+	  /* Send the lowest 'real' note to PD (255 => no key pressed) */
 	  lastKey = lowest;
 	  lo_send(pd_lo, "/key", "ii", lastKey - 36, 1);
 	}
@@ -650,7 +662,7 @@ int main(int argc, char *argv[]) {
 	menuActive = 1;
 	switch (menuItem) {
 	case 0: // Tuning
-	case 7: // Shutdown
+	case 8: // Shutdown
 	  lcd1602SetCursor(9, 1);
 	  break;
 	case 1: // Touche LED
@@ -665,10 +677,13 @@ int main(int argc, char *argv[]) {
 	case 4: // Select / play MIDI file
 	  lcd1602SetCursor(9, 1);
 	  break;
-	case 5: // Save config
+	case 5: // Eject USB drive
+	  lcd1602SetCursor(10, 1);
+	  break;
+	case 6: // Save config
 	  lcd1602SetCursor(12, 1);
 	  break;
-	case 6: // Update OS
+	case 7: // Update OS
 	  lcd1602SetCursor(10, 1);
 	  break;
 	}
@@ -707,7 +722,7 @@ int main(int argc, char *argv[]) {
 	      lcd1602WriteString("Stop    ");
 	      recording = 1;
 	      doRecord = 1;
-	      recMask = 0x03ff;
+	      recMask = 0x0fff;
 	      char wavName[13];
 	      time_t t = time(NULL);
 	      struct tm *tm = localtime(&t);
@@ -742,7 +757,18 @@ int main(int argc, char *argv[]) {
 	    selectMidiFile();
 	  }
 	  break;
-	case 5: // Save config
+	case 5: // Eject USB
+	  if (ejectUSB) {
+	    lcd1602SetCursor(11, 1);
+	    lcd1602WriteString(">>>>");
+	    system("sudo umount /usbdrive");
+	    lcd1602SetCursor(11, 1);
+	    lcd1602WriteString("Done");
+	    ejectUSB = 0;
+	    lcdMillis = myMillis();
+	  }
+	  break;
+	case 6: // Save config
 	  if (saveConfig) {
 	    FILE *cf_d;
 	    int fail = 1;
@@ -756,7 +782,7 @@ int main(int argc, char *argv[]) {
 	    saveConfig = 0;
 	  }
 	  break;
-	case 6: // Update OS
+	case 7: // Update OS
 	  if (doUpdateOS) {
 	    lcd1602SetCursor(11, 1);
 	    lcd1602WriteString(">>>>");
@@ -767,7 +793,7 @@ int main(int argc, char *argv[]) {
 	    lcdMillis = myMillis();
 	  }
 	  break;
-	case 7: // Shutdown
+	case 8: // Shutdown
 	  if (1 == doShutdown) {
 	    lcd1602SetCursor(0, 1);
 	    lcd1602WriteString("  Restarting!   ");
@@ -856,19 +882,25 @@ int main(int argc, char *argv[]) {
 	  }
 	  lcd1602SetCursor(9, 1);
 	  break;
-	case 5: // Save config
+	case 5: // Eject USB
+	  ejectUSB = !ejectUSB;
+	  lcd1602SetCursor(11, 1);
+	  lcd1602WriteString((ejectUSB) ? "Yes " : "No  ");
+	  lcd1602SetCursor(10, 1);
+	  break;
+	case 6: // Save config
 	  saveConfig = !saveConfig;
 	  lcd1602SetCursor(13, 1);
 	  lcd1602WriteString((saveConfig) ? "Yes" : "No ");
 	  lcd1602SetCursor(12, 1);
 	  break;
-	case 6: // Update OS
+	case 7: // Update OS
 	  doUpdateOS = !doUpdateOS;
 	  lcd1602SetCursor(11, 1);
 	  lcd1602WriteString((doUpdateOS) ? "Yes " : "No  ");
 	  lcd1602SetCursor(10, 1);
 	  break;
-	case 7: // Shutdown
+	case 8: // Shutdown
 	  doShutdown += 3 + clicks / abs(clicks);
 	  doShutdown %= 3;
 	  lcd1602SetCursor(10, 1);
@@ -923,10 +955,11 @@ int main(int argc, char *argv[]) {
 	  lcd1602WriteString(menuText[menuItem]);
 	  lcd1602WriteString((recording)?"Stop    ":"No      ");
 	  break;
-	case 4: // Play MIDI file	  
-	case 5: // Save config
-	case 6: // Update OS
-	case 7: // Shutdown
+	case 4: // Play MIDI file
+	case 5: // Eject USB
+	case 6: // Save config
+	case 7: // Update OS
+	case 8: // Shutdown
 	  lcd1602WriteString(menuText[menuItem]);
 	  break;
 	}
@@ -950,11 +983,11 @@ int main(int argc, char *argv[]) {
   lcd1602SetCursor(0, 1);
   if (1 == doShutdown) {
     /* Set touche and middle C marker green */
-    srSend(0x0820); // was 0x1C10
+    srSend(0x2020); // was 0x0820); // was 0x1C10
     system("sudo shutdown -r now");
   } else {
     /* Set touche and middle C marker red */
-    srSend(0x0410); // was 0x1C10
+    srSend(0x1010); // was 0x0410); // was 0x1C10
     system("sudo shutdown -h now");
   }
   
@@ -998,7 +1031,7 @@ int refresh_handler(const char *path, const char *types, lo_arg **argv,
 	  analogueVal[6], analogueVal[7]);
   lo_send(pd_lo, "/vib", "i", vib);
   lo_send(pd_lo, "/oct", "i", octaveShift);
-  lo_send(pd_lo, "/sw", "iii", prevSws[6] & 254, prevSws[7], prevSws[8] & 63);
+  lo_send(pd_lo, "/sw", "iii", prevSws[0] & 254, prevSws[1], prevSws[2] & 63);
 
   return 0;
 }
@@ -1124,8 +1157,6 @@ int8_t adxl632(uint8_t b0, uint8_t b1, uint8_t b2) {
 }
 
 void srPulse(int pin) {
-  //digitalWrite(pin, 0);
-  //digitalWrite(pin, 1);
   gpioWrite(pin, 0);
   gpioWrite(pin, 1);
 }
@@ -1139,7 +1170,6 @@ void srSend(uint16_t data) {
   uint16_t mask = 0x4000;
   data ^= recMask; // inverts the Octave LED colours when recording
   for (uint8_t i = 0; i < 15; i++) {
-    //digitalWrite(SER, ((data & mask) == 0));
     gpioWrite(SER, ((data & mask) == 0));
     srPulse(SRCLK);
     mask >>= 1;
@@ -1196,20 +1226,21 @@ int8_t encoderRotate(void) {
 }
 
 void setOctaveLEDs(void) {
+  /* various options for the ribbon octave markers, now updated for 6 LEDs */
   switch (octaveLED) {
   case 0: // Off
-    ledMask &= 0x3c00;
+    ledMask &= 0xf000; // was 0x3c00 for 5 octave LEDs;
     break;
   case 1: // All
-    ledMask |= 0x03ff;
+    ledMask |= 0x0fff; // was 0x03ff;
     break;
   case 2: // middle C
-    ledMask |= 0x03ff; 
-    ledMask &= 0x3eaa;
+    ledMask |= 0x0fff; // was 0x03ff; 
+    ledMask &= 0xfaaa; // was 0x3eaa;
     break;
   case 3: // middle C, only when shifted
-    ledMask |= 0x03ff; 
-    ledMask &= 0x3e8a;
+    ledMask |= 0x0fff; // was 0x03ff; 
+    ledMask &= 0xfa8a; // was 0x3e8a;
     break;
   }
 }
@@ -1227,7 +1258,7 @@ int playMidiFile(void) {
      main loop and passes messages to Pure Data based on values from
      the MIDI file rather than by reading the ADC and port expander.
 
-     Voices selected by Program Change events, with individual bits
+     Voices are selected by Program Change events, with individual bits
      corresponding to the different voices of the Ondes:
      1 - Ondes, 2 - Creux, 4 - Gambe, 8 - Nasillard, 16 - Octaviant
      32 - petit gambe, 64 - Souffle
@@ -1236,7 +1267,7 @@ int playMidiFile(void) {
 
      Ruban pitch and vibrato notated as Pitch Bend events in MIDI file,
      sent as new /ruban endpoint for Ruban and as /vib values for vibrato.
-     Ruban range needs to go from C-1 (MIDI 0) at 0 to nearly C7 (MIDI 109)
+     Ruban range goes from C-1 (MIDI 0) at 0 to (nearly) C7 (MIDI 109)
      at 16383, with middle C at 8192.
 
      General Purpose Controllers 1-3 (16-18; 0x10-0x12) control the
@@ -1245,7 +1276,7 @@ int playMidiFile(void) {
 
      GPC 4 (19; 0x13) for the D2-D4 relative level control
 
-     GPC 5 (80; 0x50) bitwise for Diffuseur selection:
+     GPC 5 (80; 0x50) bitwise Diffuseur selection:
      1 - D1, 2 - D2, 4 - D3, 8 - D4
 
      GPC 6 (81; 0x51) for Clavier (<=63) or Ruban (>=64)
@@ -1268,12 +1299,12 @@ int playMidiFile(void) {
   eoTrk[1] = 0;
   delta[0] = 0;
   delta[1] = 0;
-  midiSws[0] = prevSws[6]; // Initialise with the current Tiroir settings
-  midiSws[1] = prevSws[7];
-  midiSws[2] = prevSws[8];
+  midiSws[0] = prevSws[0]; // Initialise with the current Tiroir settings
+  midiSws[1] = prevSws[1];
+  midiSws[2] = prevSws[2];
 
   char tmpName[60];
-  sprintf(tmpName, "/home/pi/Ondes/MIDI/%s", midiFile[midiSel]);
+  sprintf(tmpName, "/usbdrive/MIDI/%s", midiFile[midiSel]);
   int midi_d = open(tmpName, O_RDONLY);
   fstat(midi_d, &sb);
   char *midi_p = mmap(NULL, sb.st_size, PROT_READ, MAP_SHARED, midi_d, 0);
@@ -1350,7 +1381,7 @@ int playMidiFile(void) {
 
   munmap(midi_p, sb.st_size);
   close(midi_d);
-  prevSws[8] ^= 0xff;
+  prevSws[2] ^= 0xff;
   lcdMillis = myMillis();
 }
 
