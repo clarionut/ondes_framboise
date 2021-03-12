@@ -16,7 +16,7 @@ dtoverlay=gpio-key,gpio=12,keycode=0x1d0,label="KEY_FN"
 
 C LIBRARIES REQUIRED FOR ondes_server.c
 liblo-dev (sudo apt install liblo7 liblo-dev)
-libi2c    (sudo apt install  i2c-tools libi2c0 libi2c-dev)
+libi2c    (sudo apt install  i2c-tools libi2c0 libi2c-dev, and enable I2C in raspi-config)
 libmcp23s17 (git clone https://github.com/piface/libmcp23s17.git, follow the instructions to build and install)
 liblcd1602  (git clone https://github.com/bitbank2/LCD1602.git, follow the instructions to build and install)
 
