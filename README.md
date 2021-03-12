@@ -35,5 +35,7 @@ The 3D printed parts and construction information (now essentially complete) are
 
 LATEST UPDATES:
 16-02-2021 - ondes_server_M.c code written to work with a USB keyboard instead of the switch-matrix keyboard of the original. MIDI input is handled in the server code so the Pure Data patch is unchanged. Works with a Korg microKey2-61 and an AKAI LPK25.
+
 14-02-2021 - updated the construction notes document on Thingiverse (see https://www.thingiverse.com/thing:4742145/files). Now includes a corrected layout for the interface board with (I think) all features working correctly - SN74HC595 shift register LED drivers, MCP3008 ADC, MCP23S08 port expander and ADXL632 accelerometer.
+
 21-02-2021 - the new interface board and modified server code (ondes_server_M) has been tested in the Ondes with a Korg microKEY2-61 as the keyboard input and everything works as expected. I have yet to make the linear rail mountings for the Korg keyboard but this should be trivial for anyone capable of building an Ondes themselves.
