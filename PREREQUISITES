@@ -43,6 +43,7 @@ Add these entries to the Pure Data Path (via File | Preferences | Path... in the
 /usr/lib/pd/extra/iemnet
 /usr/lib/pd/extra/cyclone
 /usr/lib/pd/extra/zexy
+/usr/lib/pd/extra/mrpeach/net
 
 Add this entry to the Pure Data Startup (via File | Preferences | Startup... in the pd GUI):
 /usr/lib/pd/extra/zexy
