@@ -34,7 +34,7 @@ Early experiments with the Ondes framboise used a PiFi DAC+ 2-channel audio card
 The 3D printed parts and construction information (now essentially complete) are published on Thingiverse (https://www.thingiverse.com/thing:4742145).
 
 LATEST UPDATES:
-16-02-2021 - ondes_server_M.c code written to work with a USB keyboard instead of the switch-matrix keyboard of the original. MIDI input is handled in the server code so the Pure Data patch is unchanged. Works with a Korg microKey2-61 and an AKAI LPK25.
+16-02-2021 - ondes_server_M.c code written to work with a USB keyboard instead of the switch-matrix keyboard of the original. MIDI input is handled in the server code so the Pure Data patch is unchanged. Works with a Korg microKey2-61 and an AKAI LPK25, so should be fine with the majority of MIDI keyboards.
 
 14-02-2021 - updated the construction notes document on Thingiverse (see https://www.thingiverse.com/thing:4742145/files). Now includes a corrected layout for the interface board with (I think) all features working correctly - SN74HC595 shift register LED drivers, MCP3008 ADC, MCP23S08 port expander and ADXL632 accelerometer.
 
